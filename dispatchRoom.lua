@@ -1,15 +1,3 @@
---  TODO:
--- Для 0.1-beta:
--- -[V] Сделать ввод чата для отправки координат.
--- -[V] Написать создание шаблона, по которому мы будем различать нужную нам строку в чате (строка 173).
--- -[X] Вывести карту в imgui и сделать ей функцию зума на колёсико мыши и Ctrl+ и Сtrl-
--- -[X] Исправить возможные ошибки в принятии информации от игроков в чате.
--- -[X] Вывести на карту позиции игроков.
--- -[X] Синхронизировать вывода позиции игроков с зумом карты.
--- Для 0.2-beta:
--- -[X] Сделать поддержку настройки сообщения из чата для нескольких серверов.
-
--- Dispatch Room корректно?
 script_name("Dispatch Room")
 script_author("donaks")
 script_version("0.1-beta")
@@ -92,7 +80,8 @@ function main()
 	player_nick = sampGetPlayerNickname(id)
 
 	if ini.script.send_hi_message then
-		show_chat_message("Запущен. Чтобы начать отправлять координаты, введите {4141e0}/droom unit")
+		local s = u8:decode("Запущен. Чтобы начать отправлять координаты, введите {4141e0}/droom unit")
+		sampAddChatMessage("["..thisScript().name.." v"..thisScript().version.."] {ffffff}"..s, color)
 	end
 
 	sampRegisterChatCommand("droom", main_command)
@@ -263,7 +252,7 @@ function main_command(args)
 			show_chat_message("Вы уже являетесь диспетчером. Для того, чтобы уйти со смены введите {4141e0}/droom stop")
 		else
 			lua_thread.create(function()
-				marking = dialog_input("{24249e}"..player_nick.."{ffffff}, введите маркировку для диспетчера.")
+				marking = dialog_input("{24249e}"..player_nick.."{ffffff}, введите Вашу маркировку:")
 				if marking then
 					status = true
 					show_chat_message("Вы начали отправлять свои координаты диспетчеру под маркировкой {6565f0}"..marking)
@@ -278,7 +267,9 @@ function main_command(args)
 			show_chat_message("Вы уже являетесь диспетчером.")
 		else
 			lua_thread.create(function()
-				dispatcher_number = dialog_input("{24249e}"..player_nick.."{ffffff}, введите Ваш номер диспетчера.")
+				local start_question = "{24249e}"..player_nick.."{ffffff}, введите свой номер, по которому Вас "..
+				"будут различать как диспетчера.\nБудет выводится как {24249e}DISPATCH #Номер"
+				dispatcher_number = dialog_input(start_question)
 				if dispatcher_number then
 					status = true
 					is_dispatcher = true
@@ -295,7 +286,7 @@ function main_command(args)
 	elseif args == "mark" then
 		if status and not is_dispatcher then
 			lua_thread.create(function()
-				local input = dialog_input("{24249e}"..marking.."{ffffff}, введите Вашу новую маркировку.")
+				local input = dialog_input("{24249e}"..marking.."{ffffff}, введите Вашу новую маркировку:")
 				if input then
 					marking = input
 					show_chat_message("Вы изменили свою маркировку на {6565f0}"..marking)
@@ -309,7 +300,7 @@ function main_command(args)
 	elseif args == "stop" then
 		if status and not is_dispatcher then
 			lua_thread.create(function()
-				local stop_question = "{24249e}"..player_nick.." под маркировкой {24249e}"..marking..
+				local stop_question = "{24249e}"..player_nick.."{ffffff} под маркировкой {24249e}"..marking..
 				"{ffffff}, Вы действительно хотите отключить отслеживание диспетчером?"
 
 				if question_dialog(stop_question) then
@@ -335,7 +326,7 @@ function main_command(args)
 end
 
 function dispatch_room()
-	local newFrame = imgui.OnFrame(
+	local dispatch_room_frame = imgui.OnFrame(
 		function() return is_show_dispatch_interface end,
 		function(player)
 			imgui.Begin("Main Window")
@@ -354,7 +345,7 @@ function dialog_input(input_text)
 		u8:decode(input_text),
 		u8:decode("ОК"),
 		u8:decode("Отмена"),
-		1
+		DIALOG_STYLE_INPUT
 	)
 
 	while sampIsDialogActive(dialog_id) do wait(100) end
@@ -368,8 +359,8 @@ function question_dialog(question)
 		dialog_id,
 		thisScript().name,
 		u8:decode(question),
-		"Да",
-		"Нет",
+		u8:decode("Да"),
+		u8:decode("Нет"),
 		DIALOG_STYLE_MSGBOX
 	)
 
@@ -463,7 +454,7 @@ function dump(o)
 end
 
 
-DISTRICTS = {
+local DISTRICTS = {
 	{"Avispa Country Club", -2667.810, -302.135, -28.831, -2646.400, -262.320, 71.169},
     {"Easter Bay Airport", -1315.420, -405.388, 15.406, -1264.400, -209.543, 25.406},
     {"Avispa Country Club", -2550.040, -355.493, 0.000, -2470.040, -318.493, 39.700},
