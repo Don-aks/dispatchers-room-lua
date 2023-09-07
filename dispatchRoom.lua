@@ -14,7 +14,9 @@ local ini = inicfg.load({
 	chat_message={
 		cmd="@",
 		cmd_end="",
-		has_rangs=false
+		has_rangs=false,
+		group_template=nil,
+		group_msg_color=nil
 	},
 	script={
 		send_hi_message=true
@@ -46,8 +48,8 @@ local sent_info = {
 local info_to_send = {}
 
 local is_wait_for_template
-local group_chat_msg_template
-local group_chat_msg_color
+local group_chat_msg_template = ini.chat_message.group_template
+local group_chat_msg_color = ini.chat_message.group_color
 
 local dispatchers = {}
 local units = {}
@@ -181,6 +183,12 @@ function sampev.onServerMessage(color, message)
 			is_wait_for_template = false
 			-- Ещё раз обрабатываем сообщение уже с шаблоном для этого
 			sampev.onServerMessage(color, message)
+		-- сохраняем всё в ини файл
+		if group_chat_msg_template ~= ini.chat_message.group_template or
+		group_chat_msg_color ~= ini.chat_message.group_color then
+			ini.chat_message.group_template = group_chat_msg_template
+			ini.chat_message.group_color = group_chat_msg_color
+			inicfg.save(ini)
 		end
 	end
 end
