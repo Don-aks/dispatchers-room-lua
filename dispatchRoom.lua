@@ -52,8 +52,6 @@ local sent_info = {
 -- по форме такая же таблица, как и выше
 -- только с информацией, которая должна быть отправлена, но ещё не отправлена
 local info_to_send = {}
-
-local is_wait_for_template
 local group_chat_msg_template = ini.chat_message.group_template
 local group_chat_msg_color = ini.chat_message.group_color
 
@@ -135,10 +133,8 @@ function main()
 
 		if not is_equal(info_to_send, {}) then
 			if not group_chat_msg_template then
-				is_wait_for_template = true
+				send_table_in_group_chat(info_to_send)
 			end
-
-			send_table_in_group_chat(info_to_send)
 		end
 
 		last_dispatchers = dispatchers
@@ -198,13 +194,10 @@ function sampev.onServerMessage(color, message)
 				end
 			end
 		end
-	else
-		if is_wait_for_template and message:find(esc(encodeJson(info_to_send))) then
-			group_chat_msg_template = create_template(message)
-			group_chat_msg_color = color
-			is_wait_for_template = false
-			-- Ещё раз обрабатываем сообщение уже с шаблоном для этого
-			sampev.onServerMessage(color, message)
+	elseif message:find(esc(encodeJson(info_to_send))) then
+		group_chat_msg_template = create_template(message)
+		group_chat_msg_color = color
+
 		-- сохраняем всё в ини файл
 		if group_chat_msg_template ~= ini.chat_message.group_template or
 		group_chat_msg_color ~= ini.chat_message.group_color then
@@ -212,6 +205,9 @@ function sampev.onServerMessage(color, message)
 			ini.chat_message.group_color = group_chat_msg_color
 			inicfg.save(ini)
 		end
+
+		sent_info = info_to_send
+		info_to_send = {}
 	end
 end
 
