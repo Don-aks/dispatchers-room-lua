@@ -5,6 +5,7 @@ script_version("0.1-beta")
 require "moonloader"
 local inicfg = require "inicfg"
 local imgui = require "mimgui"
+local new = imgui.new
 local sampev = require "lib.samp.events"
 local encoding = require "encoding"
 encoding.default = 'CP1251'
@@ -70,8 +71,16 @@ local units = {}
 
 local checkpoint
 local blip
+local is_show_dispatch_interface = new.bool(false)
+local gta_sa_map
+local zoom = 1
 
-local is_show_dispatch_interface = false
+imgui.OnInitialize(function()
+	gta_sa_map = imgui.CreateTextureFromFile(
+		thisScript().directory.."\\resource\\San_Andreas_aerial_view.jpg"
+	)
+end)
+
 
 function show_chat_message(msg)
 	-- Выводит сообщение в кодировке Windows-1251
@@ -344,7 +353,7 @@ function main_command(args)
 			if not is_dispatcher then
 				show_help_cmd_message("Вы не диспетчер.")
 			elseif status and is_dispatcher then
-				is_show_dispatch_interface = true
+				is_show_dispatch_interface[0] = not is_show_dispatch_interface[0]
 			end
 		elseif args == "mark" then
 			if status and not is_dispatcher then
@@ -375,11 +384,33 @@ end
 
 function dispatch_room()
 	local dispatch_room_frame = imgui.OnFrame(
-		function() return is_show_dispatch_interface end,
+		function() return is_show_dispatch_interface[0] end,
 		function(player)
-			imgui.Begin("Main Window")
-			imgui.Text("Hello")
-			imgui.End()
+			local wnd_size = imgui.ImVec2(600, 400)
+			imgui.SetNextWindowPos(imgui.ImVec2(500, 500), imgui.Cond.FirstUseEver)
+			imgui.SetNextWindowSize(wnd_size, imgui.Cond.FirstUseEver)
+			imgui.Begin(
+				"Dispatch room ##Map", 
+				is_show_dispatch_interface,
+				imgui.WindowFlags.NoCollapse +
+				imgui.WindowFlags.NoScrollWithMouse +
+				imgui.WindowFlags.HorizontalScrollbar
+			)
+
+			local size = imgui.ImVec2(wnd_size.x-5, wnd_size.y-15)
+			local uv_min = imgui.ImVec2(0, 0)				-- Top-left
+			local uv_max = imgui.ImVec2(1, 1)				-- Lower-right
+			local tint_col = imgui.ImVec4(1, 1, 1, 1)		-- No tint
+			local border_col = imgui.ImVec4(1, 1, 1, 0.5)	-- 50% opaque white
+			imgui.Image(
+				gta_sa_map,
+				imgui.ImVec2(size.x * zoom, size.y * zoom),
+				uv_min,
+				uv_max,
+				tint_col,
+				border_col
+			)
+			imgui.SetCursorPos((wnd_size - size) * 0.5)
 		end
 	)
 end
