@@ -49,10 +49,17 @@ local sent_info = {
 	x=nil,
 	y=nil,
 	mark=nil,
-	veh=nil
+	veh=nil,
+
+	disp=nil,
+	mark=nil,
+	["911"]=nil,
+	n=nil,
+	call=nil,
+	x=nil,
+	y=nil
 }
--- по форме такая же таблица, как и выше 
--- только с информацией, которая должна быть отправлена, но ещё не отправлена
+-- по форме такая же таблица, как и выше только с информацией, которая ещё не отправлена
 local info_to_send = {}
 local group_chat_msg_template = ini.chat_message.group_template
 local group_chat_msg_color = ini.chat_message.group_color
@@ -134,6 +141,8 @@ function main()
 		end
 
 		if not is_equal(info_to_send, {}) then
+			-- Отправка инфы если нет group_chat_msg_template (чтобы его создать)
+			-- или если игрок диспетчер или если есть диспетчеры на смене.
 			if not group_chat_msg_template then
 				send_table_in_group_chat(info_to_send)
 			end
@@ -214,6 +223,9 @@ function sampev.onServerMessage(color, message)
 end
 
 function create_template(player_message)
+	-- Принимает наше сообщение, отправленное через чат.
+	-- Возвращает регулярное выражение для сообщения, в котором 
+	-- никнейм и то, что написали в чат входят в 2 группы "(.+)".
 	local sent_json = encodeJson(info_to_send)
 	local before_json, after_json = player_message:match("(.+)"..esc(sent_json).."(.*)")
 	-- экранизируем всё сообщение, кроме отправленного нами json
@@ -384,6 +396,9 @@ end
 
 function dialog_input(input_text)
 	-- Выводит диалог с вводом текста.
+	-- Возвращает текст в поле ввода после нажатия на "ОК".
+	-- Если поле ввода пустое или была нажата клавиша "Отмена",
+	-- возвращает nil.
 	-- Текст над полем для ввода (input_text) выводится в кодировке Windows-1251
 	sampShowDialog(
 		dialog_id,
@@ -457,6 +472,7 @@ end
 
 
 function esc(s)
+	-- Убирает "магические" символы из строки
 	return s:gsub('%^', '%%^')
 	        :gsub('%$', '%%$')
 	        :gsub('%(', '%%(')
