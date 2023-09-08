@@ -291,16 +291,14 @@ end
 
 function main_command(args)
 	-- droom
-	if args == "unit" and not status then
-		lua_thread.create(function()
+	lua_thread.create(function()
+		if args == "unit" and not status then
 			marking = dialog_input(col_blue..player_nick.."{ffffff}, введите Вашу маркировку:")
 			if marking then
 				status = true
 				show_chat_message("Вы начали отправлять координаты диспетчеру как "..col_light_blue..marking)
 			end
-		end)
-	elseif args == "disp" and not status then
-		lua_thread.create(function()
+		elseif args == "disp" and not status then
 			disp_number = dialog_input(
 				col_blue..player_nick.."{ffffff}, введите номер, по которому Вас "..
 				"будут различать.\nВы будете выводится как "..col_blue.."DISPATCH #Номер"
@@ -312,9 +310,7 @@ function main_command(args)
 				show_chat_message("Вы начали смену как "..col_light_blue.."DISPATCH #"..disp_number)
 				dispatch_room()
 			end
-		end)
-	elseif (args == "unit" or args == "disp") and status and not is_dispatcher then
-		lua_thread.create(function()
+		elseif (args == "unit" or args == "disp") and status and not is_dispatcher then
 			if question_dialog(
 				col_blue..player_nick.."{ffffff} под маркировкой "..col_blue..marking..
 				"{ffffff}, Вы действительно хотите отключить отслеживание диспетчером?"
@@ -329,39 +325,35 @@ function main_command(args)
 					main_command(args)
 				end
 			end
-		end)
-	elseif (args == "disp" or args == "unit") and status and is_dispatcher then
-		if question_dialog(
-			col_blue.."DISPATCH #"..disp_number.."{ffffff}, Вы действительно хотите уйти со смены?"
-		) then
-			send_negative_status()
-			show_chat_message("Вы покинули смену диспетчера.")
-			status = false
-			is_dispatcher = false
+		elseif (args == "disp" or args == "unit") and status and is_dispatcher then
+			if question_dialog(
+				col_blue.."DISPATCH #"..disp_number.."{ffffff}, Вы действительно хотите уйти со смены?"
+			) then
+				send_negative_status()
+				show_chat_message("Вы покинули смену диспетчера.")
+				status = false
+				is_dispatcher = false
 
-			-- Аналогично комментарию выше.
-			if args == "unit" then
-				main_command(args)
+				-- Аналогично комментарию выше.
+				if args == "unit" then
+					main_command(args)
+				end
 			end
-		end
 
-	elseif args == "room" then
-		if not is_dispatcher then
-			show_help_cmd_message("Вы не диспетчер.")
-		elseif status and is_dispatcher then
-			is_show_dispatch_interface = true
-		end
-	elseif args == "mark" then
-		if status and not is_dispatcher then
-			lua_thread.create(function()
+		elseif args == "room" then
+			if not is_dispatcher then
+				show_help_cmd_message("Вы не диспетчер.")
+			elseif status and is_dispatcher then
+				is_show_dispatch_interface = true
+			end
+		elseif args == "mark" then
+			if status and not is_dispatcher then
 				local input = dialog_input(col_blue..marking.."{ffffff}, введите Вашу новую маркировку:")
 				if input then
 					marking = input
 					show_chat_message("Вы изменили маркировку на "..col_light_blue..marking)
 				end
-			end)
-		elseif status and is_dispatcher then
-			lua_thread.create(function()
+			elseif status and is_dispatcher then
 				local input = dialog_input(
 					col_blue.."DISPATCH #"..disp_number.."{ffffff}, введите свой новый номер:"
 				)
@@ -370,15 +362,15 @@ function main_command(args)
 					disp_number = input
 					show_chat_message("Вы изменили свой номер на "..col_light_blue.."DISPATCH #"..disp_number)
 				end
-			end)
+			else
+				show_help_cmd_message("Вы не на смене.")
+			end
+		elseif args == "" or not args then
+			show_help_cmd_message("/droom [Ключ]. Ключи: unit|disp|mark|room")
 		else
-			show_help_cmd_message("Вы не на смене.")
+			show_help_cmd_message("Неверный ключ. Доступные ключи: unit|disp|mark|room")
 		end
-	elseif args == "" or not args then
-		show_help_cmd_message("/droom [Ключ]. Ключи: unit|disp|mark|room")
-	else
-		show_help_cmd_message("Неверный ключ. Доступные ключи: unit|disp|room|mark|stop")
-	end
+	end)
 end
 
 function dispatch_room()
