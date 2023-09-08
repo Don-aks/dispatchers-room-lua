@@ -187,6 +187,9 @@ function sampev.onServerMessage(color, message)
 					dispatchers[nick] = info
 				else
 					units[nick] = info
+					if is_dispatcher then
+						send_active_disp_status()
+					end
 				end
 			end
 		end
