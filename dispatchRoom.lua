@@ -155,28 +155,34 @@ function sampev.onServerMessage(color, message)
 					sent_info[k] = v
 				end
 				info_to_send = {}
-			elseif is_dispatcher and units[nick] then
+			elseif units[nick] then
 				if info["unit"] == 0 then
-					show_role_information_in_chat("{24249e}"..nick.."{ffffff} перестал отправлять координаты (по собственному желанию).")
-				else		
+					units[nick] = nil
+					if is_dispatcher then
+						show_role_information_in_chat("{24249e}"..nick.."{ffffff} перестал отправлять координаты (по собственному желанию).")
+					end
+				elseif is_dispatcher then
 					-- Обновляем информацию о юните
 					for k, v in pairs(info) do
 						units[nick][k] = v
 					end
 				end
-			elseif not is_dispatcher and dispatchers[nick] then
-				if info.marker == 1 then
-					set_race_checkpoint(info.x, info.y, info.z)
+			elseif dispatchers[nick] then
+				if info.disp == 0 then
+					dispatchers[nick] = nil
+				elseif not is_dispatcher and status then
+					if info.marker == 1 then
+						set_race_checkpoint(info.x, info.y)
+					elseif info["911"] then
+						show_information_about911(info["911"], info.n, info.call, info.x, info.y)
+					end
 				end
-			elseif nick == player_nick then
+			else
+				-- Новые диспетчера и юниты
 				if info.disp == 1 then
 					dispatchers[nick] = info
-				elseif info.disp == 0 then
-					dispatchers[nick] = nil
-				elseif info.unit == 1 then
-					units[nick] = info
 				elseif info.unit == 0 then
-					units[nick] = nil
+					units[nick] = info
 				end
 			end
 		end
