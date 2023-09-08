@@ -235,11 +235,8 @@ function create_template(player_message)
 end
 
 
-function start_disp_watch()
-	wait_for_chat_message_template = true
-	send_table_in_group_chat({disp=1, number=dispatcher_number})
-	show_chat_message("Вы заступили на смену под именем {6565f0}DISPATCH #"..dispatcher_number)
-	dispatch_room()
+function send_active_disp_status()
+	info_to_send = {disp=1, number=disp_number}
 end
 
 function send_location_to_unit()
@@ -257,12 +254,8 @@ function show_information_about911(text, number, caller_nickname, x, y)
 	sampAddChatMessage("==========================", -1)
 end
 
-function stop_watch()
-	if is_dispatcher then
-		send_table_in_group_chat({disp=0})
-	else
-		send_table_in_group_chat({stop=1})
-	end
+function send_negative_status()
+	info_to_send = is_dispatcher and {disp=0} or {stop=1}
 end
 
 function send_table_in_group_chat(t)
@@ -308,7 +301,9 @@ function main_command(args)
 				if dispatcher_number then
 					status = true
 					is_dispatcher = true
-					start_disp_watch()
+					send_active_disp_status()
+					show_chat_message("Вы заступили на смену под именем {6565f0}DISPATCH #"..dispatcher_number)
+					dispatch_room()
 				end
 			end)
 		end
@@ -339,7 +334,7 @@ function main_command(args)
 				"{ffffff}, Вы действительно хотите отключить отслеживание диспетчером?"
 
 				if question_dialog(stop_question) then
-					stop_watch()
+					send_negative_status()
 					status = false
 					show_chat_message("Вы перестали отправлять координаты диспетчеру.")
 				end
@@ -349,7 +344,9 @@ function main_command(args)
 				local stop_question = "{24249e}DISPATCH #"..dispatcher_number.."{ffffff}, Вы действительно хотите уйти со смены?"
 				
 				if question_dialog(stop_question) then
-					stop_watch()
+					send_negative_status()
+					status = false
+					is_dispatcher = false
 				end
 			end)
 		else
