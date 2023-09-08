@@ -104,23 +104,18 @@ function main()
 				info_to_send.veh = 0
 			end
 
-			-- ещё нет отправленной информации диспетчеру
-			if not sent_info then
-				info_to_send["unit"] = 1
-			else
-				for k, _ in pairs(info_to_send) do
-					-- если информацию об этом уже отправляли диспетчеру
-					if sent_info[k] then
-						if k == "x" or k == "y" then
-							-- если игрок не сдвинулся больше чем на ini.settings.coords_accuracy, 
-							-- не отправляем его расположение
-							if math.abs(info_to_send[k] - sent_info[k]) < ini.settings.coords_accuracy then
-								info_to_send[k] = coords_accuracy
-							end
-						-- если старая информация
-						elseif info_to_send[k] == sent_info[k] then
-							info_to_send[k] = nil
+			for k, _ in pairs(info_to_send) do
+				-- если информацию об этом уже отправляли диспетчеру
+				if sent_info[k] then
+					if k == "x" or k == "y" then
+						-- если игрок не сдвинулся больше чем на ini.settings.coords_accuracy, 
+						-- не отправляем его расположение
+						if math.abs(info_to_send[k] - sent_info[k]) < ini.settings.coords_accuracy then
+							info_to_send[k] = coords_accuracy
 						end
+					-- если старая информация
+					elseif info_to_send[k] == sent_info[k] then
+						info_to_send[k] = nil
 					end
 				end
 			end
@@ -156,7 +151,7 @@ function sampev.onServerMessage(color, message)
 				end
 				info_to_send = {}
 			elseif units[nick] then
-				if info["unit"] == 0 then
+				if info.stop == 1 then
 					units[nick] = nil
 					if is_dispatcher then
 						show_role_information_in_chat("{24249e}"..nick.."{ffffff} перестал отправлять координаты (по собственному желанию).")
@@ -181,7 +176,7 @@ function sampev.onServerMessage(color, message)
 				-- Новые диспетчера и юниты
 				if info.disp == 1 then
 					dispatchers[nick] = info
-				elseif info.unit == 0 then
+				else
 					units[nick] = info
 				end
 			end
@@ -257,7 +252,7 @@ function stop_watch()
 	if is_dispatcher then
 		send_table_in_group_chat({disp=0})
 	else
-		send_table_in_group_chat({unit=0})
+		send_table_in_group_chat({stop=1})
 	end
 end
 
