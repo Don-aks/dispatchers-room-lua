@@ -10,6 +10,9 @@ local encoding = require "encoding"
 encoding.default = 'CP1251'
 u8 = encoding.UTF8
 
+local main_cmd = "droom"
+local ini_file_name = thisScript().name
+local dialog_id = 20000
 local col_orange_int = 0xff3523
 local col_blue_int = 0x24249e
 local col_blue = "{24249e}"
@@ -29,27 +32,26 @@ local ini = inicfg.load({
 		send_hi_message=true
 	},
 	settings={
-		coords_accuracy=10,
-		hp_accuracy=5
+		coords_inaccuracy=10,
+		hp_inaccuracy=5,
+		send_info_delay=5000
 	}
-})
+}, ini_file_name)
 local dialog_id = 20000
 
 local player_nick
+local marking
 
 local status = false
 local is_dispatcher = false
-local dispatcher_number
-
-local marking
-
+local disp_number
 local sent_info = {
 	x=nil,
 	y=nil,
 	mark=nil,
 	veh=nil
 }
--- по форме такая же таблица, как и выше
+-- по форме такая же таблица, как и выше 
 -- только с информацией, которая должна быть отправлена, но ещё не отправлена
 local info_to_send = {}
 local group_chat_msg_template = ini.chat_message.group_template
@@ -91,10 +93,10 @@ function main()
 		sampAddChatMessage("["..thisScript().name.." v"..thisScript().version.."] {ffffff}"..s, col_orange_int)
 	end
 
-	sampRegisterChatCommand("droom", main_command)
+	sampRegisterChatCommand(main_cmd, main_command)
 
 	while true do
-		wait(5000)
+		wait(ini.settings.send_info_delay)
 		if status and not is_dispatcher and is_equal(info_to_send, {}) then
 			info_to_send = {}
 			local x, y, _ = getCharCoordinates(PLAYER_PED)
@@ -203,7 +205,7 @@ function sampev.onServerMessage(color, message)
 		group_chat_msg_color ~= ini.chat_message.group_color then
 			ini.chat_message.group_template = group_chat_msg_template
 			ini.chat_message.group_color = group_chat_msg_color
-			inicfg.save(ini)
+			inicfg.save(ini, ini_file_name)
 		end
 
 		sent_info = info_to_send
@@ -289,13 +291,13 @@ function main_command(args)
 		lua_thread.create(function()
 			local start_question = col_blue..player_nick.."{ffffff}, введите свой номер, по которому Вас "..
 			"будут различать как диспетчера.\nБудет выводится как {24249e}DISPATCH #Номер"
-			dispatcher_number = dialog_input(start_question)
-			if dispatcher_number then
+			disp_number = dialog_input(start_question)
+			if disp_number then
 				status = true
 				is_dispatcher = true
 				send_active_disp_status()
 				show_chat_message(
-					"Вы заступили на смену под именем "..col_light_blue.."DISPATCH #"..dispatcher_number
+					"Вы заступили на смену под именем "..col_light_blue.."DISPATCH #"..disp_number
 				)
 				dispatch_room()
 			end
@@ -319,7 +321,7 @@ function main_command(args)
 		end)
 	elseif (args == "disp" or args == "unit") and status and is_dispatcher then
 		if question_dialog(
-			col_blue.."DISPATCH #"..dispatcher_number.."{ffffff}, Вы действительно хотите уйти со смены?"
+			col_blue.."DISPATCH #"..disp_number.."{ffffff}, Вы действительно хотите уйти со смены?"
 		) then
 			send_negative_status()
 			show_chat_message("Вы ушли со смены диспетчера.")
@@ -381,7 +383,7 @@ function dispatch_room()
 end
 
 function dialog_input(input_text)
-	-- Выводит диалог с вводом текста. 
+	-- Выводит диалог с вводом текста.
 	-- Текст над полем для ввода (input_text) выводится в кодировке Windows-1251
 	sampShowDialog(
 		dialog_id,
