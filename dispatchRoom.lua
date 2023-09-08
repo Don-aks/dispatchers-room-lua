@@ -10,6 +10,12 @@ local encoding = require "encoding"
 encoding.default = 'CP1251'
 u8 = encoding.UTF8
 
+local col_orange_int = 0xff3523
+local col_blue_int = 0x24249e
+local col_blue = "{24249e}"
+local col_light_blue = "{6565f0}"
+local col_red_int = 0xb00000
+
 local ini = inicfg.load({
 	chat_message={
 		cmd="@",
@@ -28,7 +34,6 @@ local ini = inicfg.load({
 	}
 })
 local dialog_id = 20000
-local color = 0xFF3523
 
 local player_nick
 
@@ -64,9 +69,9 @@ local is_show_dispatch_interface = false
 function show_chat_message(msg)
 	-- Выводит сообщение в кодировке Windows-1251
 	if is_dispatcher then
-		sampAddChatMessage("[DISPATCH INFORMATION]: {ffffff}"..u8:decode(msg), color)
+		sampAddChatMessage("[DISPATCH INFORMATION]: {ffffff}"..u8:decode(msg), col_orange_int)
 	else
-		sampAddChatMessage("[Unit information]: {ffffff}"..u8:decode(msg), 0x24249e)
+		sampAddChatMessage("[Unit information]: {ffffff}"..u8:decode(msg), col_blue_int)
 	end
 end
 
@@ -85,7 +90,7 @@ function main()
 
 	if ini.script.send_hi_message then
 		local s = u8:decode("Запущен. Чтобы начать отправлять координаты, введите {4141e0}/droom unit")
-		sampAddChatMessage("["..thisScript().name.." v"..thisScript().version.."] {ffffff}"..s, color)
+		sampAddChatMessage("["..thisScript().name.." v"..thisScript().version.."] {ffffff}"..s, col_orange_int)
 	end
 
 	sampRegisterChatCommand("droom", main_command)
@@ -163,7 +168,7 @@ function sampev.onServerMessage(color, message)
 				if info.stop == 1 then
 					units[nick] = nil
 					if is_dispatcher then
-						show_chat_message("{24249e}"..nick.."{ffffff} перестал отправлять координаты (по собственному желанию).")
+						show_chat_message(col_light_blue..nick.."{ffffff} перестал отправлять координаты (по собственному желанию).")
 					end
 				elseif is_dispatcher then
 					-- Обновляем информацию о юните
@@ -281,26 +286,28 @@ function main_command(args)
 			marking = dialog_input(col_blue..player_nick.."{ffffff}, введите Вашу маркировку:")
 			if marking then
 				status = true
-				show_chat_message("Вы начали отправлять свои координаты диспетчеру под маркировкой {6565f0}"..marking))
+				show_chat_message("Вы начали отправлять свои координаты диспетчеру под маркировкой  как "..col_light_blue..marking))
 			end
 		end)
 	elseif args == "disp" and not status then
 		lua_thread.create(function()
-			local start_question = "{24249e}"..player_nick.."{ffffff}, введите свой номер, по которому Вас "..
+			local start_question = col_blue..player_nick.."{ffffff}, введите свой номер, по которому Вас "..
 			"будут различать как диспетчера.\nБудет выводится как {24249e}DISPATCH #Номер"
 			dispatcher_number = dialog_input(start_question)
 			if dispatcher_number then
 				status = true
 				is_dispatcher = true
 				send_active_disp_status()
-				show_chat_message("Вы заступили на смену под именем {6565f0}DISPATCH #"..dispatcher_number)
+				show_chat_message(
+					"Вы заступили на смену под именем "..col_light_blue.."DISPATCH #"..dispatcher_number
+				)
 				dispatch_room()
 			end
 		end)
 	elseif (args == "unit" or args == "disp") and status and not is_dispatcher then
 		lua_thread.create(function()
 			if question_dialog(
-				"{24249e}"..player_nick.."{ffffff} под маркировкой {24249e}"..marking..
+				col_blue..player_nick.."{ffffff} под маркировкой "..col_blue..marking..
 				"{ffffff}, Вы действительно хотите отключить отслеживание диспетчером?"
 			) then
 				send_negative_status()
@@ -316,7 +323,7 @@ function main_command(args)
 		end)
 	elseif (args == "disp" or args == "unit") and status and is_dispatcher then
 		if question_dialog(
-			"{24249e}DISPATCH #"..dispatcher_number.."{ffffff}, Вы действительно хотите уйти со смены?"
+			col_blue.."DISPATCH #"..dispatcher_number.."{ffffff}, Вы действительно хотите уйти со смены?"
 		) then
 			send_negative_status()
 			show_chat_message("Вы ушли со смены диспетчера.")
@@ -338,7 +345,7 @@ function main_command(args)
 	elseif args == "mark" then
 		if status and not is_dispatcher then
 			lua_thread.create(function()
-				local input = dialog_input("{24249e}"..marking.."{ffffff}, введите Вашу новую маркировку:")
+				local input = dialog_input(col_blue..marking.."{ffffff}, введите Вашу новую маркировку:")
 				if input then
 					marking = input
 					show_chat_message("Вы изменили свою маркировку на {6565f0}"..marking)
