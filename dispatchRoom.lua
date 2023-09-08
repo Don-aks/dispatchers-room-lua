@@ -63,15 +63,15 @@ local is_show_dispatch_interface = false
 
 function show_chat_message(msg)
 	-- Выводит сообщение в кодировке Windows-1251
-	sampAddChatMessage("["..thisScript().name.."] {ffffff}"..u8:decode(msg), color)
-end
-
-function show_role_information_in_chat(msg)
 	if is_dispatcher then
 		sampAddChatMessage("[DISPATCH INFORMATION]: {ffffff}"..u8:decode(msg), color)
 	else
 		sampAddChatMessage("[Unit information]: {ffffff}"..u8:decode(msg), 0x24249e)
 	end
+end
+
+function show_help_cmd_message(msg)
+	sampAddChatMessage(u8:decode(msg), 0xAAAAAA)
 end
 
 
@@ -163,7 +163,7 @@ function sampev.onServerMessage(color, message)
 				if info.stop == 1 then
 					units[nick] = nil
 					if is_dispatcher then
-						show_role_information_in_chat("{24249e}"..nick.."{ffffff} перестал отправлять координаты (по собственному желанию).")
+						show_chat_message("{24249e}"..nick.."{ffffff} перестал отправлять координаты (по собственному желанию).")
 					end
 				elseif is_dispatcher then
 					-- Обновляем информацию о юните
@@ -331,7 +331,7 @@ function main_command(args)
 
 	elseif args == "room" then
 		if not is_dispatcher then
-			show_chat_message("Вы не являетесь диспетчером. Чтобы стать диспетчером, введите {4141e0}/droom disp")
+			show_help_cmd_message("Вы не являетесь диспетчером. Чтобы стать диспетчером, введите {4141e0}/droom disp")
 		elseif status and is_dispatcher then
 			is_show_dispatch_interface = true
 		end
@@ -357,12 +357,12 @@ function main_command(args)
 				end
 			end)
 		else
-			show_chat_message("Вы ещё не запустили скрипт. Введите {4141e0}/droom unit {ffffff}или {4141e0}/droom disp {ffffff}для этого.")
+			show_help_cmd_message("Вы ещё не запустили скрипт. Введите {4141e0}/droom unit {ffffff}или {4141e0}/droom disp {ffffff}для этого.")
 		end
 	elseif args == "" or not args then
-		show_chat_message("/droom [Ключ]. Ключи: unit|disp|mark|room")
+		show_help_cmd_message("/droom [Ключ]. Ключи: unit|disp|mark|room")
 	else
-		sampAddChatMessage(u8:decode("Неверный ключ. Доступные ключи: unit|disp|room|mark|stop"), 0xAAAAAA)
+		show_help_cmd_message("Неверный ключ. Доступные ключи: unit|disp|room|mark|stop")
 	end
 end
 
