@@ -53,6 +53,7 @@ local group_chat_msg_template = ini.chat_message.group_template
 local group_chat_msg_color = ini.chat_message.group_color
 
 local dispatchers = {}
+local last_dispatchers = {}
 local units = {}
 
 local checkpoint
@@ -104,6 +105,12 @@ function main()
 				info_to_send.veh = 0
 			end
 
+			-- если кто-то стал новым диспетчером за время задержки,
+			-- заново отправляем ему инфу
+			if not is_equal(dispatchers, last_dispatchers) then
+				sent_info = {}
+			end
+
 			for k, _ in pairs(info_to_send) do
 				-- если информацию об этом уже отправляли диспетчеру
 				if sent_info[k] then
@@ -128,6 +135,8 @@ function main()
 
 			send_table_in_group_chat(info_to_send)
 		end
+
+		last_dispatchers = dispatchers
 	end
 end
 
