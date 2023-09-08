@@ -15,6 +15,7 @@ local ini = inicfg.load({
 		cmd="@",
 		cmd_end="",
 		has_rangs=false,
+		has_id=true,
 		group_template=nil,
 		group_msg_color=nil
 	},
@@ -145,6 +146,9 @@ function sampev.onServerMessage(color, message)
 			if not info then
 				return
 			end
+			-- Добавляем нижние подчёркивания на месте пробелов, чтобы иметь ник игрока
+			-- отправившего сообщение
+			nick = nick:gsub(" ", "_")
 
 			if nick == player_nick and is_equal(info, info_to_send) then
 				for k, v in pairs(info) do
@@ -193,18 +197,31 @@ function sampev.onServerMessage(color, message)
 	end
 end
 
-function create_template(message)
+function create_template(player_message)
 	local sent_json = encodeJson(info_to_send)
-	local before_json, after_json = message:match("(.+)"..esc(sent_json).."(.*)")
-	-- экранизируем всё сообщение, кроме отправленного игроком json
+	local before_json, after_json = player_message:match("(.+)"..esc(sent_json).."(.*)")
+	-- экранизируем всё сообщение, кроме отправленного нами json
 	local template = esc(before_json)..sent_json..esc(after_json or "")
 
 	if ini.chat_message.has_rangs then
-		local rang_name = template:match("^(.+) "..player_nick)
-		template = template:gsub(rang_name, ".+")
+		local rang_name = player_message:match("^(.+) "..player_nick)
+		template = template:gsub(rang_name, ".+", 1)
+	end
+	if ini.chat_message.has_id then
+		local _, id = sampGetPlayerIdByCharHandle(PLAYER_PED)
+		template = template:gsub(tostring(id), ".-", 1)
 	end
 
-	return template:gsub(player_nick, "(.+)"):gsub(esc(sent_json), "(.+)")
+	-- Проверяем, есть ли наш никнейм с нижним подчёркиванием в строке
+	if player_message:find(player_nick) then
+		template = template:gsub(player_nick, "(.+)", 1)
+	else
+		-- Если нет, ищем наш никнейм с пробелом вместо подчёркивания
+		local player_nick_without_underscore = player_nick:gsub("_", " ")
+		template = template:gsub(player_nick_without_underscore, "(.+)", 1)
+	end
+
+	return template:gsub(esc(sent_json), "(.+)")
 end
 
 
