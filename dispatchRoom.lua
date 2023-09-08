@@ -276,40 +276,59 @@ end
 
 function main_command(args)
 	-- droom
-	if args == "unit" then
-		if status and not is_dispatcher then
-			show_chat_message("Вы уже отправляете свои координаты диспетчеру.")
-		elseif status and is_dispatcher then
-			show_chat_message("Вы уже являетесь диспетчером. Для того, чтобы уйти со смены введите {4141e0}/droom stop")
-		else
-			lua_thread.create(function()
-				marking = dialog_input("{24249e}"..player_nick.."{ffffff}, введите Вашу маркировку:")
-				if marking then
-					status = true
-					show_chat_message("Вы начали отправлять свои координаты диспетчеру под маркировкой {6565f0}"..marking)
+	if args == "unit" and not status then
+		lua_thread.create(function()
+			marking = dialog_input(col_blue..player_nick.."{ffffff}, введите Вашу маркировку:")
+			if marking then
+				status = true
+				show_chat_message("Вы начали отправлять свои координаты диспетчеру под маркировкой {6565f0}"..marking))
+			end
+		end)
+	elseif args == "disp" and not status then
+		lua_thread.create(function()
+			local start_question = "{24249e}"..player_nick.."{ffffff}, введите свой номер, по которому Вас "..
+			"будут различать как диспетчера.\nБудет выводится как {24249e}DISPATCH #Номер"
+			dispatcher_number = dialog_input(start_question)
+			if dispatcher_number then
+				status = true
+				is_dispatcher = true
+				send_active_disp_status()
+				show_chat_message("Вы заступили на смену под именем {6565f0}DISPATCH #"..dispatcher_number)
+				dispatch_room()
+			end
+		end)
+	elseif (args == "unit" or args == "disp") and status and not is_dispatcher then
+		lua_thread.create(function()
+			if question_dialog(
+				"{24249e}"..player_nick.."{ffffff} под маркировкой {24249e}"..marking..
+				"{ffffff}, Вы действительно хотите отключить отслеживание диспетчером?"
+			) then
+				send_negative_status()
+				show_chat_message("Вы перестали отправлять координаты диспетчеру.")
+				status = false
+
+				-- Вводим второй раз команду за игрока, чтобы он сразу
+				-- смог начать желаемую смену.
+				if args == "disp" then
+					main_command(args)
 				end
-			end)
+			end
+		end)
+	elseif (args == "disp" or args == "unit") and status and is_dispatcher then
+		if question_dialog(
+			"{24249e}DISPATCH #"..dispatcher_number.."{ffffff}, Вы действительно хотите уйти со смены?"
+		) then
+			send_negative_status()
+			show_chat_message("Вы ушли со смены диспетчера.")
+			status = false
+			is_dispatcher = false
+
+			-- Аналогично комментарию выше.
+			if args == "unit" then
+				main_command(args)
+			end
 		end
-	elseif args == "disp" then
-		if status and not is_dispatcher then
-			show_chat_message("Вы не можете стать диспетчером, потому что отправляете ему свои координаты.")
-			show_chat_message("Чтобы отменить отправку координат введите {4141e0}/droom stop")
-		elseif status and is_dispatcher then
-			show_chat_message("Вы уже являетесь диспетчером.")
-		else
-			lua_thread.create(function()
-				local start_question = "{24249e}"..player_nick.."{ffffff}, введите свой номер, по которому Вас "..
-				"будут различать как диспетчера.\nБудет выводится как {24249e}DISPATCH #Номер"
-				dispatcher_number = dialog_input(start_question)
-				if dispatcher_number then
-					status = true
-					is_dispatcher = true
-					send_active_disp_status()
-					show_chat_message("Вы заступили на смену под именем {6565f0}DISPATCH #"..dispatcher_number)
-					dispatch_room()
-				end
-			end)
-		end
+
 	elseif args == "room" then
 		if not is_dispatcher then
 			show_chat_message("Вы не являетесь диспетчером. Чтобы стать диспетчером, введите {4141e0}/droom disp")
@@ -326,37 +345,24 @@ function main_command(args)
 				end
 			end)
 		elseif status and is_dispatcher then
-			show_chat_message("Вы не можете изменить маркировку, т.к. являетесь диспетчером.")
-		else
-			show_chat_message("Вы не можете изменить маркировку, т.к. не отправляете координаты диспетчеру с помощью {4141e0}/droom unit")
-		end
-	elseif args == "stop" then
-		if status and not is_dispatcher then
 			lua_thread.create(function()
-				local stop_question = "{24249e}"..player_nick.."{ffffff} под маркировкой {24249e}"..marking..
-				"{ffffff}, Вы действительно хотите отключить отслеживание диспетчером?"
+				local input = dialog_input(
+					"{24249e} DISPATCH #"..disp_number..
+					"{ffffff}, введите свой новый номер:"
+				)
 
-				if question_dialog(stop_question) then
-					send_negative_status()
-					status = false
-					show_chat_message("Вы перестали отправлять координаты диспетчеру.")
-				end
-			end)
-		elseif status and is_dispatcher then
-			lua_thread.create(function()
-				local stop_question = "{24249e}DISPATCH #"..dispatcher_number.."{ffffff}, Вы действительно хотите уйти со смены?"
-				
-				if question_dialog(stop_question) then
-					send_negative_status()
-					status = false
-					is_dispatcher = false
+				if input then
+					disp_number = input
+					show_chat_message("Вы изменили имя на "..col_light_blue.."DISPATCH #"..disp_number)
 				end
 			end)
 		else
 			show_chat_message("Вы ещё не запустили скрипт. Введите {4141e0}/droom unit {ffffff}или {4141e0}/droom disp {ffffff}для этого.")
 		end
+	elseif args == "" or not args then
+		show_chat_message("/droom [Ключ]. Ключи: unit|disp|mark|room")
 	else
-		sampAddChatMessage(u8:decode("Подсказка: /droom [Ключ]. Ключи: unit|disp|room|mark|stop"), 0xAAAAAA)
+		sampAddChatMessage(u8:decode("Неверный ключ. Доступные ключи: unit|disp|room|mark|stop"), 0xAAAAAA)
 	end
 end
 
