@@ -13,7 +13,7 @@ u8 = encoding.UTF8
 
 local main_cmd = "droom"
 local ini_file_name = thisScript().name
-local dialog_id = 20000
+local dialog_id = 21000
 local col_orange_int = 0xff3523
 local col_blue_int = 0x24249e
 local col_blue = "{24249e}"
@@ -38,7 +38,6 @@ local ini = inicfg.load({
 		send_info_delay=5000
 	}
 }, ini_file_name)
-local dialog_id = 20000
 
 local player_nick
 local marking
