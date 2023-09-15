@@ -385,9 +385,13 @@ function dispatch_room()
 	local dispatch_room_frame = imgui.OnFrame(
 		function() return is_show_dispatch_interface[0] end,
 		function(player)
-			local wnd_size = imgui.ImVec2(600, 400)
-			imgui.SetNextWindowPos(imgui.ImVec2(500, 500), imgui.Cond.FirstUseEver)
-			imgui.SetNextWindowSize(wnd_size, imgui.Cond.FirstUseEver)
+			local sw, sh = getScreenResolution()
+			imgui.SetNextWindowPos(
+				imgui.ImVec2(sw/2, sh/2),
+				imgui.Cond.FirstUseEver,
+				imgui.ImVec2(0.5, 0.5)
+			)
+			imgui.SetNextWindowSize(imgui.ImVec2(sw*0.9, sh*0.9), imgui.Cond.FirstUseEver)
 			imgui.Begin(
 				"Dispatch room ##Map", 
 				is_show_dispatch_interface,
@@ -395,21 +399,17 @@ function dispatch_room()
 				imgui.WindowFlags.NoScrollWithMouse +
 				imgui.WindowFlags.HorizontalScrollbar
 			)
+			imgui.GetStyle().WindowTitleAlign = imgui.ImVec2(0.5, 0.5)
 
-			local size = imgui.ImVec2(wnd_size.x-5, wnd_size.y-15)
+			local size = imgui.ImVec2(500*zoom, 500*zoom)
 			local uv_min = imgui.ImVec2(0, 0)				-- Top-left
 			local uv_max = imgui.ImVec2(1, 1)				-- Lower-right
 			local tint_col = imgui.ImVec4(1, 1, 1, 1)		-- No tint
 			local border_col = imgui.ImVec4(1, 1, 1, 0.5)	-- 50% opaque white
-			imgui.Image(
-				gta_sa_map,
-				imgui.ImVec2(size.x * zoom, size.y * zoom),
-				uv_min,
-				uv_max,
-				tint_col,
-				border_col
-			)
-			imgui.SetCursorPos((wnd_size - size) * 0.5)
+
+			-- Центрировать карту в окне
+			imgui.SetCursorPosX((imgui.GetWindowWidth() - size.x) * 0.5)
+			imgui.Image(gta_sa_map, size, uv_min, uv_max, tint_col, border_col)
 		end
 	)
 end
