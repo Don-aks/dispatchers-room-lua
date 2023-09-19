@@ -383,7 +383,7 @@ end
 
 function dispatch_room()
 	local dispatch_room_frame = imgui.OnFrame(
-		function() return is_show_dispatch_interface[0] end,
+		function() return is_show_dispatch_interface[0] and not isPauseMenuActive() end,
 		function(player)
 			local sw, sh = getScreenResolution()
 			imgui.SetNextWindowPos(
