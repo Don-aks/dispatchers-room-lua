@@ -401,15 +401,15 @@ function dispatch_room()
 			)
 			imgui.GetStyle().WindowTitleAlign = imgui.ImVec2(0.5, 0.5)
 
-			local size = imgui.ImVec2(500*zoom, 500*zoom)
+			-- Карта должна быть квадратом
+			local w_size = imgui.GetWindowSize()
+			local w_min_side = math.min(w_size.x, w_size.y)
+			local size = imgui.ImVec2(w_min_side*0.95, w_min_side*0.95)
 			local uv_min = imgui.ImVec2(0, 0)				-- Top-left
 			local uv_max = imgui.ImVec2(1, 1)				-- Lower-right
-			local tint_col = imgui.ImVec4(1, 1, 1, 1)		-- No tint
-			local border_col = imgui.ImVec4(1, 1, 1, 0.5)	-- 50% opaque white
-
 			-- Центрировать карту в окне
-			imgui.SetCursorPosX((imgui.GetWindowWidth() - size.x) * 0.5)
-			imgui.Image(gta_sa_map, size, uv_min, uv_max, tint_col, border_col)
+			imgui.SetCursorPosX((w_size.x - size.x) * 0.5)
+			imgui.Image(gta_sa_map, size, uv_min, uv_max)
 		end
 	)
 end
