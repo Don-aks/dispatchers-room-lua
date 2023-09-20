@@ -70,7 +70,7 @@ local units = {}
 
 local checkpoint
 local blip
-local is_show_dispatch_interface = new.bool(false)
+local is_show_map = new.bool(false)
 local gta_sa_map
 local zoom = 1
 
@@ -348,7 +348,7 @@ function main_command(args)
 				end
 			end
 
-		elseif args == "room" then
+		elseif args == "map" then
 			if not is_dispatcher then
 				show_help_cmd_message("Вы не диспетчер.")
 			elseif status and is_dispatcher then
@@ -374,16 +374,16 @@ function main_command(args)
 				show_help_cmd_message("Вы не на смене.")
 			end
 		elseif args == "" or not args then
-			show_help_cmd_message("/droom [Ключ]. Ключи: unit|disp|mark|room")
+			show_help_cmd_message("/droom [Ключ]. Ключи: unit|disp|map|mark")
 		else
-			show_help_cmd_message("Неверный ключ. Доступные ключи: unit|disp|mark|room")
+			show_help_cmd_message("Неверный ключ. Доступные ключи: unit|disp|map|mark")
 		end
 	end)
 end
 
 function dispatch_room()
-	local dispatch_room_frame = imgui.OnFrame(
-		function() return is_show_dispatch_interface[0] and not isPauseMenuActive() end,
+	local map_frame = imgui.OnFrame(
+		function() return is_show_map[0] and not isPauseMenuActive() end,
 		function(player)
 			local sw, sh = getScreenResolution()
 			imgui.SetNextWindowPos(
@@ -393,8 +393,8 @@ function dispatch_room()
 			)
 			imgui.SetNextWindowSize(imgui.ImVec2(sw*0.9, sh*0.9), imgui.Cond.FirstUseEver)
 			imgui.Begin(
-				"Dispatch room ##Map", 
-				is_show_dispatch_interface,
+				"Dispatch room - Map",
+				is_show_map,
 				imgui.WindowFlags.NoCollapse +
 				imgui.WindowFlags.NoScrollWithMouse +
 				imgui.WindowFlags.HorizontalScrollbar
