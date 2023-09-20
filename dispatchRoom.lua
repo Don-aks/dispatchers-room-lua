@@ -65,7 +65,6 @@ local group_chat_msg_template = ini.chat_message.group_template
 local group_chat_msg_color = ini.chat_message.group_color
 
 local dispatchers = {}
-local last_dispatchers = {}
 local units = {}
 
 local checkpoint
@@ -111,6 +110,7 @@ function main()
 	sampRegisterChatCommand(main_cmd, main_command)
 
 	while true do
+		local last_dispatchers = dispatchers
 		wait(ini.settings.send_info_delay)
 		if status and not is_dispatcher and is_equal(info_to_send, {}) then
 			info_to_send = {}
@@ -155,8 +155,6 @@ function main()
 				send_table_in_group_chat(info_to_send)
 			end
 		end
-
-		last_dispatchers = dispatchers
 	end
 end
 
@@ -402,9 +400,18 @@ function dispatch_room()
 			imgui.GetStyle().WindowTitleAlign = imgui.ImVec2(0.5, 0.5)
 
 			-- Карта должна быть квадратом
-			local w_size = imgui.GetWindowSize()
-			local w_min_side = math.min(w_size.x, w_size.y)
-			local size = imgui.ImVec2(w_min_side*0.95, w_min_side*0.95)
+			local window_size = imgui.GetWindowSize()
+			local min_side = math.min(window_size.x, window_size.y)
+			-- Исключаем паддинги из размера, чтобы карта
+			-- не скроллилась при 100%-ном зуме
+			local p = imgui.GetStyle().WindowPadding
+			local fp = imgui.GetStyle().FramePadding
+			local fs = imgui.GetFontSize()
+			local size = imgui.ImVec2(
+				min_side - p.x*2 - fp.x*2,
+				min_side - p.y*2 - fp.y*2 - fs
+			)
+
 			local uv_min = imgui.ImVec2(0, 0)				-- Top-left
 			local uv_max = imgui.ImVec2(1, 1)				-- Lower-right
 			-- Центрировать карту в окне
